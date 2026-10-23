@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Kestrel Health Clinic, Adelaide. GP, skin checks, women's health, physio, psychology and vaccinations. Book online.">
+<title>Kestrel Health Clinic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: clinic site, sticky nav, one view per hash token; photo-led home with live availability; booking stepper; staff dashboard */
+:root{
+  --bg:#F5F8F6; --surface:#FFFFFF; --ink:#11251F; --muted:#566B64; --line:#D9E3DF;
+  --accent:#1E6B57; --accent-ink:#FFFFFF; --accent-soft:#E2EFEA; --wattle:#B87A12; --wattle-soft:#FBF0DA;
+  --ok:#2E7D4F; --warn:#A86A00; --bad:#B23B3B; --shade:rgba(8,24,19,.55); --glass:rgba(255,255,255,.92);
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1714; --surface:#15211D; --ink:#E6EFEB; --muted:#9AB0A8; --line:#26352F;
+  --accent:#5DBB9C; --accent-ink:#0B1612; --accent-soft:#1B2E27; --wattle:#E3A94A; --wattle-soft:#2E2414;
+  --ok:#6CC892; --warn:#E3A94A; --bad:#E47878; --shade:rgba(0,0,0,.6); --glass:rgba(21,33,29,.92); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1714; --surface:#15211D; --ink:#E6EFEB; --muted:#9AB0A8; --line:#26352F;
+  --accent:#5DBB9C; --accent-ink:#0B1612; --accent-soft:#1B2E27; --wattle:#E3A94A; --wattle-soft:#2E2414;
+  --ok:#6CC892; --warn:#E3A94A; --bad:#E47878; --shade:rgba(0,0,0,.6); --glass:rgba(21,33,29,.92); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,5.2vw,3.5rem);font-weight:700;letter-spacing:-.025em}
+h2{font-size:clamp(1.55rem,3vw,2.15rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:500}
+p{margin:0}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,.btn{font:600 .95rem var(--f-body);border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:.65rem 1.1rem;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;transition:transform .2s var(--ease),background .2s,border-color .2s,box-shadow .2s}
+button:hover:not(:disabled),.btn:hover{transform:translateY(-1px);border-color:var(--accent)}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn-primary:hover{box-shadow:0 8px 20px -10px var(--accent)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--wattle);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.6rem .75rem;width:100%}
+label{display:grid;gap:.3rem;font-weight:500;font-size:.92rem}
+
+/* header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);transition:box-shadow .3s}
+header.scrolled{box-shadow:0 6px 24px -18px rgba(0,0,0,.5)}
+.nav{display:flex;align-items:center;gap:1rem;padding-block:.7rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.55rem;font-family:var(--f-display);font-weight:700;font-size:1.15rem;color:var(--ink);text-decoration:none}
+.links{display:flex;gap:.2rem;margin-left:auto;flex-wrap:wrap}
+.links a{text-decoration:none;color:var(--muted);font-weight:500;padding:.4rem .65rem;border-radius:8px;transition:background .2s,color .2s}
+.links a:hover{color:var(--ink)}
+.links a[aria-current="page"]{color:var(--ink);background:var(--accent-soft)}
+.links a.cta{background:var(--accent);color:var(--accent-ink)}
+main{padding-block:1.5rem 4rem;display:grid;gap:3.5rem}
+main.enter > *{animation:rise .5s var(--ease) both}
+main.enter > *:nth-child(2){animation-delay:.06s}
+main.enter > *:nth-child(3){animation-delay:.12s}
+main.enter > *:nth-child(n+4){animation-delay:.18s}
+@keyframes rise{from{transform:translateY(14px);opacity:.35}to{transform:none;opacity:1}}
+.demo-banner{background:var(--wattle-soft);color:var(--ink);font-size:.85rem}
+.demo-banner .wrap{padding-block:.45rem}
+
+/* live status */
+.status{display:inline-flex;align-items:center;gap:.45rem;font-size:.85rem;font-weight:600;padding:.3rem .7rem;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.status.closed{background:var(--wattle-soft);color:var(--warn)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;position:relative}
+.status:not(.closed) .dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;animation:ping 1.8s ease-out infinite}
+@keyframes ping{from{transform:scale(.5);opacity:.9}to{transform:scale(1.6);opacity:0}}
+
+/* photos */
+.photo{position:relative;overflow:hidden;background:var(--accent-soft);border-radius:14px}
+.photo img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease),filter .4s}
+.photo img.soft{filter:blur(1.2px) saturate(1.05);transform:scale(1.03)}
+.hero-photo img.soft{filter:blur(3px) saturate(1.1);transform:scale(1.06)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:2.5rem;align-items:center}
+.hero > *{min-width:0}
+.hero .copy{display:grid;gap:1.1rem}
+.hero p.lead{font-size:1.15rem;color:var(--muted);max-width:34em}
+.hero .actions{display:flex;gap:.6rem;flex-wrap:wrap}
+.hero-visual{position:relative;padding-bottom:2.5rem}
+.hero-photo{aspect-ratio:4/3.4;max-width:100%;border-radius:22px}
+.hero-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,var(--shade))}
+.float{position:absolute;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px -24px rgba(0,0,0,.55)}
+.next-card{left:-1.25rem;right:22%;bottom:0;padding:1rem;display:grid;gap:.6rem;animation:floaty 6s ease-in-out infinite}
+.billing-chip{top:1rem;right:1rem;padding:.45rem .8rem;font-weight:600;font-size:.85rem;display:flex;gap:.4rem;align-items:center}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.next-card ul{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}
+.next-card li{display:flex;justify-content:space-between;align-items:center;gap:.75rem}
+.slotchip{font-family:var(--f-mono);font-size:.85rem;background:var(--accent);color:var(--accent-ink);border:0;padding:.3rem .6rem;border-radius:8px;white-space:nowrap}
+.prac{display:flex;gap:.7rem;align-items:center;min-width:0}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:600;background:var(--accent-soft);color:var(--accent);flex:none}
+.avatar.sm{width:32px;height:32px;font-size:.8rem}
+
+/* need picker */
+.need{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:1.25rem;display:grid;gap:1rem}
+.chips{display:flex;gap:.45rem;flex-wrap:wrap}
+.chip{border-radius:99px;padding:.45rem .9rem;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* services */
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.1rem}
+.svc{display:grid;grid-template-rows:auto 1fr;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:var(--ink);transition:transform .3s var(--ease),box-shadow .3s,border-color .3s,opacity .3s}
+.svc:hover{transform:translateY(-4px);box-shadow:0 18px 30px -22px rgba(0,0,0,.45);border-color:var(--accent)}
+.svc:hover .photo img{transform:scale(1.06)}
+.svc .photo{border-radius:0;aspect-ratio:4/3}
+.svc .body{padding:1rem 1.1rem 1.1rem;display:grid;gap:.45rem;align-content:start}
+.svc .meta{display:flex;gap:.75rem;font-size:.85rem;color:var(--muted)}
+.tag{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--wattle)}
+.svc .go{font-weight:600;color:var(--accent);font-size:.9rem}
+.svc.hide{display:none}
+.svc.pop{animation:pop .35s var(--ease) both}
+@keyframes pop{from{transform:scale(.97);opacity:.4}to{transform:none;opacity:1}}
+
+/* steps + app */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.split > *{min-width:0}
+.how{display:grid;gap:1rem}
+.how ol{list-style:none;margin:0;padding:0;display:grid;gap:.9rem;counter-reset:s}
+.how li{display:grid;grid-template-columns:auto 1fr;gap:.9rem;align-items:start;counter-increment:s}
+.how li::before{content:counter(s);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:700;background:var(--accent-soft);color:var(--accent)}
+.app{background:var(--accent);color:var(--accent-ink);border-radius:20px;padding:1.5rem;display:grid;grid-template-columns:1fr auto;gap:1.25rem;align-items:center;overflow:hidden}
+.app > *{min-width:0}
+.app p{opacity:.9}
+.app .btn{background:var(--accent-ink);color:var(--accent);border-color:transparent;margin-top:.9rem}
+.phone{width:132px;aspect-ratio:9/18.5;border-radius:22px;background:var(--surface);border:5px solid var(--ink);padding:10px 8px;display:grid;gap:6px;align-content:start;transform:rotate(6deg);box-shadow:0 20px 30px -18px rgba(0,0,0,.6)}
+.phone i{display:block;height:8px;border-radius:4px;background:var(--line)}
+.phone b{display:block;height:30px;border-radius:7px;background:var(--accent-soft)}
+.phone b.on{background:var(--accent)}
+
+/* team */
+.rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:1rem;overflow-x:auto;padding-bottom:.4rem;scroll-snap-type:x mandatory}
+.member{scroll-snap-align:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1rem;display:grid;gap:.6rem;align-content:start}
+.member .next{font-size:.85rem;color:var(--muted)}
+.member .next b{color:var(--accent)}
+
+/* info row */
+.info{display:grid;grid-template-columns:1.2fr 1fr;gap:1.5rem}
+.info > *{min-width:0}
+.hours{list-style:none;margin:0;padding:0}
+.hours li{display:flex;justify-content:space-between;padding:.45rem .6rem;border-radius:8px}
+.hours li.today{background:var(--accent-soft);font-weight:600}
+details{border-bottom:1px solid var(--line);padding-block:.85rem}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:1rem}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--f-mono);color:var(--accent);transition:transform .25s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{margin-top:.5rem;color:var(--muted);max-width:62ch}
+.reveal{transition:transform .7s var(--ease)}
+.reveal.pending{transform:translateY(18px)}
+
+/* service page */
+.banner{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:21/8;min-height:220px;max-width:100%}
+.banner .photo{position:absolute;inset:0;border-radius:0}
+.banner::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--shade),transparent 75%)}
+.banner .over{position:absolute;left:0;bottom:0;padding:1.5rem;z-index:1;color:#fff;display:grid;gap:.4rem;max-width:36rem}
+.banner .tag{color:#F6D58E}
+.svc-page{display:grid;grid-template-columns:1.5fr 1fr;gap:2.5rem}
+.svc-page > *{min-width:0}
+.svc-page .body{display:grid;gap:1.1rem;max-width:62ch}
+.svc-page ul{margin:0;padding-left:1.2rem;display:grid;gap:.35rem}
+.aside{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.25rem;display:grid;gap:.9rem;align-content:start;position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px)}
+.kv{display:flex;justify-content:space-between;gap:1rem;border-top:1px solid var(--line);padding-top:.6rem}
+.kv span:first-child{color:var(--muted)}
+.quick{display:flex;gap:.4rem;flex-wrap:wrap}
+
+/* booking */
+.progress{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:1rem}
+.progress span{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .5s var(--ease)}
+.steps{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
+.steps span{font-size:.85rem;padding:.3rem .7rem;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.steps span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.steps span.done{color:var(--accent);border-color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.25rem;display:grid;gap:1rem}
+.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.6rem}
+.choice{text-align:left;display:grid;gap:.2rem;padding:.8rem;border-radius:12px;font-weight:500}
+.choice.img{grid-template-columns:56px 1fr;align-items:center;gap:.75rem;padding:.55rem}
+.choice.img .photo{width:56px;height:56px;border-radius:10px}
+.choice small{color:var(--muted);font-weight:400}
+.choice[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.days{display:flex;gap:.45rem;overflow-x:auto;padding-bottom:.25rem}
+.day{flex:none;display:grid;justify-items:center;padding:.5rem .7rem;min-width:62px}
+.day b{font-family:var(--f-display);font-size:1.2rem}
+.day small{font-weight:500;color:var(--muted);font-size:.75rem}
+.day[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.day[aria-pressed="true"] small{color:var(--accent-ink)}
+.times{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:.45rem}
+.time{justify-content:center;font-family:var(--f-mono);font-weight:500;padding:.5rem;animation:pop .3s var(--ease) both}
+.time[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.form .full{grid-column:1/-1}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.summary{display:grid;gap:.4rem;background:var(--accent-soft);border-radius:12px;padding:1rem}
+.err{color:var(--bad);font-size:.9rem}
+.check{width:64px;height:64px;border-radius:50%;background:var(--accent);display:grid;place-items:center;animation:pop .5s var(--ease) both}
+.check path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .6s .25s var(--ease) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* accounts / admin */
+.auth{max-width:420px;display:grid;gap:1rem}
+.hint{font-size:.85rem;background:var(--wattle-soft);border-radius:10px;padding:.7rem .85rem}
+.appt{display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center;padding:.9rem 0;border-top:1px solid var(--line)}
+.appt > div{min-width:0}
+.date-tile{display:grid;justify-items:center;width:58px;padding:.4rem;border-radius:10px;background:var(--accent-soft);color:var(--accent)}
+.date-tile b{font-family:var(--f-display);font-size:1.3rem;line-height:1}
+.date-tile small{font-size:.72rem;font-weight:600;text-transform:uppercase}
+.pill{font-size:.75rem;font-weight:600;padding:.15rem .55rem;border-radius:99px;white-space:nowrap}
+.st-booked{background:var(--accent-soft);color:var(--accent)}
+.st-arrived{background:var(--wattle-soft);color:var(--warn)}
+.st-completed{background:var(--line);color:var(--muted)}
+.st-cancelled{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.85rem;display:grid;gap:.1rem}
+.stat b{font-family:var(--f-display);font-size:1.6rem;font-variant-numeric:tabular-nums}
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:end}
+.toolbar label{min-width:160px;flex:1}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:.92rem}
+th,td{text-align:left;padding:.65rem .8rem;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+tr.fresh td{animation:flash 1.6s ease-out}
+@keyframes flash{from{background:var(--wattle-soft)}to{background:transparent}}
+td .acts{display:flex;gap:.3rem;flex-wrap:wrap}
+td .acts button{padding:.3rem .55rem;font-size:.8rem}
+.tabs{display:flex;gap:.3rem;border-bottom:1px solid var(--line)}
+.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--muted);padding:.6rem .8rem}
+.tabs button:hover{transform:none}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:.7rem 1.1rem;border-radius:10px;font-weight:500;z-index:20;animation:rise .3s var(--ease)}
+footer{border-top:1px solid var(--line);background:var(--surface)}
+footer .wrap{padding-block:2rem;display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;font-size:.92rem}
+footer .wrap > *{min-width:0}
+
+@media (max-width:820px){
+  .hero,.svc-page,.split,.info{grid-template-columns:1fr}
+  .next-card{left:.75rem;right:.75rem}
+  .stats{grid-template-columns:1fr 1fr}
+  .form{grid-template-columns:1fr}
+  footer .wrap{grid-template-columns:1fr}
+  .links{margin-left:0;width:100%}
+  .appt{grid-template-columns:auto 1fr}
+  .appt > :last-child{grid-column:1/-1}
+  .aside{position:static}
+  .banner{aspect-ratio:auto;min-height:260px}
+}
+@media (max-width:480px){.app{grid-template-columns:1fr}.phone{display:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}.reveal.pending{transform:none}}
+</style>
+</head>
+<body>
+
+<div class="demo-banner"><div class="wrap">Demo site with sample data and AI-generated photos. Bookings are saved in this browser only.</div></div>
+<header id="hdr">
+  <div class="wrap nav">
+    <a class="brand" href="#home" data-go="home">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--accent)"/><path d="M8 20 L15 9 L22 20 M11 16 H19" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Kestrel Health
+    </a>
+    <nav class="links" aria-label="Main">
+      <a href="#services" data-go="services">Services</a>
+      <a href="#team" data-go="team">Our team</a>
+      <a href="#account" data-go="account">My bookings</a>
+      <a href="#admin" data-go="admin">Staff</a>
+      <a href="#book" data-go="book" class="cta">Book now</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="view"></main>
+<footer>
+  <div class="wrap">
+    <div><h3>Kestrel Health Clinic</h3><p class="muted">Level 1, 48 Sample Street<br>Adelaide SA 5000</p></div>
+    <div><h3>Hours</h3><p class="muted">Mon–Fri 8:00–18:00<br>Sat 9:00–13:00 · Sun closed</p></div>
+    <div><h3>Contact</h3><p class="muted">Phone <span class="mono">(08) 8000 0000</span><br>In an emergency call <b>000</b>.</p></div>
+  </div>
+</footer>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- Sample data (swap for Supabase later) ---------- */
+const TZ="Australia/Adelaide";
+const PRACTICE = { name:"Kestrel Health Clinic", open:{1:[8,18],2:[8,18],3:[8,18],4:[8,18],5:[8,18],6:[9,13]} };
+const IMG = {hero:"img/hero.jpg",gp:"img/gp.jpg",skin:"img/skin.jpg",womens:"img/womens.jpg",physio:"img/physio.jpg",psych:"img/psych.jpg",vax:"img/vax.jpg",tele:"img/tele.jpg"};
+const SERVICES = [
+  {id:"gp", name:"GP consultation", tag:"General practice", mins:15, fee:"Bulk billed for concession card holders", summary:"Standard consults for new and ongoing health concerns, scripts and referrals.",
+   detail:["Standard (up to 15 min) and long (30 min) appointments","Repeat scripts, referrals and medical certificates","Chronic disease management plans","Children's health and immunisation catch-ups"], prac:["dr-nguyen","dr-patel","dr-okafor"]},
+  {id:"skin", name:"Skin check", tag:"Skin cancer", mins:30, fee:"From $95, Medicare rebate applies", summary:"Full-body skin examination with dermoscopy and same-day minor excisions.",
+   detail:["Full-body skin check with dermatoscope","Mole mapping and photo comparison","Biopsies and minor excisions","Results follow-up by phone or in person"], prac:["dr-patel"]},
+  {id:"womens", name:"Women's health", tag:"General practice", mins:30, fee:"Mixed billing", summary:"Cervical screening, contraception, pregnancy care and menopause support.",
+   detail:["Cervical screening tests","Contraception advice, Implanon and IUD","Shared antenatal care","Menopause and perimenopause care"], prac:["dr-okafor"]},
+  {id:"physio", name:"Physiotherapy", tag:"Allied health", mins:45, fee:"$110 initial, private health rebates", summary:"Assessment and treatment for back, neck, sports and post-surgical injuries.",
+   detail:["Musculoskeletal assessment and treatment","Sports injury rehab","Post-operative rehabilitation","Home exercise programs"], prac:["sam-reid"]},
+  {id:"psych", name:"Psychology", tag:"Allied health", mins:50, fee:"Medicare rebate with a mental health care plan", summary:"Counselling for anxiety, depression, stress and life changes.",
+   detail:["CBT and ACT-based therapy","Up to 10 rebated sessions with a GP plan","Telehealth available","Adults and adolescents 14+"], prac:["lena-brooks"]},
+  {id:"vax", name:"Vaccinations", tag:"Nurse clinic", mins:15, fee:"Free for eligible NIP vaccines", summary:"Flu, COVID-19, travel and childhood vaccines with our practice nurse.",
+   detail:["Seasonal flu and COVID-19 boosters","Travel vaccines and advice","Childhood schedule vaccines","Workplace vaccination programs"], prac:["nurse-kim"]},
+  {id:"tele", name:"Telehealth", tag:"Online", mins:15, fee:"Bulk billed for existing patients", summary:"Video or phone consults with your regular GP.",
+   detail:["Video or phone appointments","Scripts sent electronically","Results discussions","Available for existing patients"], prac:["dr-nguyen","dr-patel"]},
+];
+const NEEDS=[["all","Everything"],["gp,tele","See a GP"],["skin","Check a mole"],["womens","Women's health"],["physio","Sore back or injury"],["psych","Mental health"],["vax","A vaccine"]];
+const PRACS = {
+  "dr-nguyen":{name:"Dr Anna Nguyen",role:"General Practitioner",init:"AN",days:[1,2,3,4,5]},
+  "dr-patel":{name:"Dr Raj Patel",role:"GP · Skin cancer medicine",init:"RP",days:[1,3,5,6]},
+  "dr-okafor":{name:"Dr Chioma Okafor",role:"GP · Women's health",init:"CO",days:[2,3,4]},
+  "sam-reid":{name:"Sam Reid",role:"Physiotherapist",init:"SR",days:[1,2,4,5]},
+  "lena-brooks":{name:"Lena Brooks",role:"Clinical Psychologist",init:"LB",days:[2,4,5]},
+  "nurse-kim":{name:"Grace Kim",role:"Practice Nurse",init:"GK",days:[1,2,3,4,5,6]},
+};
+const DEMO_USERS = {"patient@demo.com":{pw:"demo1234",role:"patient",name:"Jordan Smith",phone:"0400 000 000"},
+                    "admin@demo.com":{pw:"admin1234",role:"admin",name:"Front desk"}};
+
+/* ---------- Storage (try/catch: may be unavailable) ---------- */
+const store = {
+  get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const fmtTime=m=>{const h=Math.floor(m/60),mm=m%60;return `${((h+11)%12)+1}:${pad(mm)} ${h<12?"am":"pm"}`};
+const fmtDate=s=>new Date(s+"T00:00").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"});
+const relDay=s=>{const t=ymd(new Date());return s===t?"Today":s===ymd(addDays(new Date(),1))?"Tomorrow":fmtDate(s)};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const photo=(k,alt,cls="")=>`<div class="photo ${cls}"><img src="${IMG[k]}" alt="${esc(alt)}" loading="lazy"></div>`;
+
+function seed(){
+  const t=new Date(); const out=[]; let id=1;
+  const names=["Mia Thompson","Liam Chen","Olivia Brown","Noah Wilson","Ava Martin","Ethan Lee","Isla Walker","Jack Harris","Chloe Young","Leo King"];
+  const plan=[[0,"gp","dr-nguyen",9*60],[0,"gp","dr-nguyen",9*60+30],[0,"physio","sam-reid",10*60],[0,"vax","nurse-kim",11*60],[0,"skin","dr-patel",14*60],
+              [1,"womens","dr-okafor",9*60],[1,"psych","lena-brooks",13*60+30],[1,"gp","dr-nguyen",15*60],[2,"tele","dr-patel",10*60+15],[3,"gp","dr-okafor",11*60]];
+  plan.forEach(([d,s,p,m],i)=>{
+    let day=addDays(t,d); while(!PRACS[p].days.includes(day.getDay())) day=addDays(day,1);
+    out.push({id:"A"+(id++),service:s,prac:p,date:ymd(day),start:m,name:names[i],email:`${names[i].split(" ")[0].toLowerCase()}@example.com`,phone:"0400 111 222",status:i<2?"arrived":"booked",notes:"",created:Date.now()});
+  });
+  let d2=addDays(t,2); while(!PRACS["dr-nguyen"].days.includes(d2.getDay())) d2=addDays(d2,1);
+  out.push({id:"A"+(id++),service:"gp",prac:"dr-nguyen",date:ymd(d2),start:10*60,name:"Jordan Smith",email:"patient@demo.com",phone:"0400 000 000",status:"booked",notes:"Repeat script",created:Date.now()});
+  return out;
+}
+let appts = store.get("kh_appts",null) || seed(); store.set("kh_appts",appts);
+let session = store.get("kh_session",null);
+let lastBooked = null;
+const save=()=>store.set("kh_appts",appts);
+
+/* ---------- Slot engine ---------- */
+function slotsFor(pracId,dateStr,mins){
+  const d=new Date(dateStr+"T00:00"), dow=d.getDay();
+  if(!PRACS[pracId].days.includes(dow) || !PRACTICE.open[dow]) return [];
+  const [o,c]=PRACTICE.open[dow]; const out=[];
+  const taken=appts.filter(a=>a.prac===pracId&&a.date===dateStr&&a.status!=="cancelled")
+    .map(a=>[a.start,a.start+(SERVICES.find(s=>s.id===a.service)?.mins||15)]);
+  const now=new Date(); const isToday=ymd(now)===dateStr; const nowM=now.getHours()*60+now.getMinutes();
+  for(let m=o*60;m+mins<=c*60;m+=15){
+    if(dow!==6 && m<13*60+15 && m+mins>12*60+30) continue; // lunch
+    if(isToday&&m<=nowM+30) continue;
+    if(taken.some(([a,b])=>m<b&&m+mins>a)) continue;
+    out.push(m);
+  }
+  return out;
+}
+function nextFor(p,mins=15,limit=1){
+  const out=[]; const t=new Date();
+  for(let i=0;i<14&&out.length<limit;i++){const ds=ymd(addDays(t,i)); for(const m of slotsFor(p,ds,mins)){out.push({p,ds,m}); if(out.length>=limit)break;}}
+  return out;
+}
+
+/* ---------- Live clinic status (clinic's own timezone) ---------- */
+function clinicNow(){
+  const parts=new Intl.DateTimeFormat("en-AU",{timeZone:TZ,weekday:"short",hour:"numeric",minute:"numeric",hour12:false}).formatToParts(new Date());
+  const g=t=>parts.find(p=>p.type===t)?.value; const dow=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(g("weekday"));
+  return {dow, mins:(+g("hour")%24)*60+ +g("minute")};
+}
+function statusHTML(){
+  const {dow,mins}=clinicNow(); const h=PRACTICE.open[dow];
+  if(h&&mins>=h[0]*60&&mins<h[1]*60){const left=h[1]*60-mins;return `<span class="status"><span class="dot"></span>Open now · closes ${fmtTime(h[1]*60)}${left<=60?` (in ${left} min)`:""}</span>`}
+  for(let i=0;i<8;i++){const d=(dow+i)%7, hh=PRACTICE.open[d]; if(hh&&(i>0||mins<hh[0]*60)){return `<span class="status closed"><span class="dot"></span>Closed · opens ${i===0?"today":i===1?"tomorrow":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d]} ${fmtTime(hh[0]*60)}</span>`}}
+  return "";
+}
+
+/* ---------- Router ---------- */
+const view=document.getElementById("view");
+let booking={};
+function go(token){ if(location.hash.slice(1)!==token) history.replaceState(null,"","#"+token); render(token); window.scrollTo({top:0,behavior:"smooth"}); }
+document.addEventListener("click",e=>{const a=e.target.closest("[data-go]"); if(a){e.preventDefault(); go(a.dataset.go);}});
+window.addEventListener("hashchange",()=>render(location.hash.slice(1)));
+window.addEventListener("scroll",()=>document.getElementById("hdr").classList.toggle("scrolled",scrollY>8),{passive:true});
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2600)}
+
+function render(token){
+  token=token||"home";
+  document.querySelectorAll(".links a").forEach(a=>a.toggleAttribute("aria-current",a.dataset.go===token||(token.startsWith("svc-")&&a.dataset.go==="services")));
+  if(token.startsWith("svc-")) renderService(token.slice(4));
+  else ({home:renderHome,services:renderServices,team:renderTeam,book:renderBook,account:renderAccount,admin:renderAdmin}[token]||renderHome)();
+  enhance(token);
+}
+function enhance(token){
+  if(!/^(book|admin|account)$/.test(token)){view.classList.remove("enter");void view.offsetWidth;view.classList.add("enter")}
+  // Soften low-res previews until full-size photos are dropped in
+  view.querySelectorAll(".photo img").forEach(img=>{const f=()=>img.classList.toggle("soft",img.naturalWidth>0&&img.naturalWidth<600);img.complete?f():img.addEventListener("load",f,{once:true})});
+  // Scroll reveal: content is visible at rest, it only slides up a little
+  const els=view.querySelectorAll(".reveal");
+  if("IntersectionObserver" in window){
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove("pending");io.unobserve(e.target)}}),{rootMargin:"0px 0px -8% 0px"});
+    els.forEach(el=>{if(el.getBoundingClientRect().top>innerHeight){el.classList.add("pending");io.observe(el)}});
+  }
+}
+
+/* ---------- Home ---------- */
+function svcCard(s){
+  const n=s.prac.map(p=>nextFor(p,s.mins)[0]).filter(Boolean).sort((a,b)=>(a.ds+pad(a.m)).localeCompare(b.ds+pad(b.m)))[0];
+  return `<a class="svc" href="#svc-${s.id}" data-go="svc-${s.id}" data-id="${s.id}">${photo(s.id,s.name)}
+   <div class="body"><span class="tag">${s.tag}</span><h3>${s.name}</h3><p class="muted">${s.summary}</p>
+   <div class="meta"><span class="mono">${s.mins} min</span><span>${n?`Next: <b style="color:var(--accent)">${relDay(n.ds)} ${fmtTime(n.m)}</b>`:"Fully booked"}</span></div>
+   <span class="go">View service →</span></div></a>`;
+}
+const helpCard=`<div class="svc help" data-id="help" style="background:var(--accent-soft);border-color:transparent"><div class="body" style="align-content:center;gap:.7rem;padding:1.4rem"><span class="tag">Not sure?</span><h3>Not sure what you need?</h3><p class="muted">Start with a standard GP consult. Your doctor can refer you to the right service in the clinic.</p><button class="btn-primary" data-go="svc-gp" style="justify-self:start">Book a GP</button></div></div>`;
+const svcGrid=()=>`<div class="svc-grid" id="svcGrid">${SERVICES.map(svcCard).join("")}${helpCard}</div>`;
+
+function renderHome(){
+  const nf=["dr-nguyen","dr-patel","dr-okafor"].map(p=>nextFor(p)[0]).filter(Boolean).sort((a,b)=>(a.ds+pad(a.m)).localeCompare(b.ds+pad(b.m)));
+  const {dow}=clinicNow(); const dn=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  view.innerHTML=`
+  <section class="hero">
+    <div class="copy">
+      <div id="liveStatus">${statusHTML()}</div>
+      <h1>Your local GP, with physio and psychology under the same roof.</h1>
+      <p class="lead">Book online in under a minute. Pick a service, choose your practitioner and see live availability.</p>
+      <div class="actions"><a class="btn btn-primary" href="#book" data-go="book">Book an appointment</a><a class="btn" href="#services" data-go="services">Explore services</a></div>
+    </div>
+    <div class="hero-visual">
+      ${photo("hero","Kestrel Health Clinic reception and waiting area","hero-photo")}
+      <div class="float billing-chip"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="var(--accent)"/><path d="M4.5 8.2l2.2 2.2 4.8-4.8" stroke="var(--accent-ink)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>Bulk billing for under-16s</div>
+      <div class="float next-card" aria-label="Next available GP appointments">
+        <span class="eyebrow">Next available GP</span>
+        <ul>${nf.map(n=>`<li><span class="prac"><span class="avatar sm">${PRACS[n.p].init}</span><span><b>${PRACS[n.p].name}</b><br><small class="muted">${relDay(n.ds)}</small></span></span><button class="slotchip" data-quick="${n.p}|${n.ds}|${n.m}">${fmtTime(n.m)}</button></li>`).join("")||"<li>No times this fortnight</li>"}</ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="need reveal">
+    <div class="row"><h2>What do you need today?</h2><span class="muted" id="needCount">${SERVICES.length} services</span></div>
+    <div class="chips" role="group" aria-label="Filter services">${NEEDS.map(([k,l],i)=>`<button class="chip" aria-pressed="${i===0}" data-need="${k}">${l}</button>`).join("")}</div>
+    ${svcGrid()}
+  </section>
+
+  <section class="split reveal">
+    <div class="how panel">
+      <p class="eyebrow">Booking takes three steps</p>
+      <h2>How to book</h2>
+      <ol>
+        <li><div><b>Choose a service</b><p class="muted">GP, skin check, physio, psychology and more.</p></div></li>
+        <li><div><b>Pick a practitioner and time</b><p class="muted">Live availability for the next 14 days.</p></div></li>
+        <li><div><b>Confirm your details</b><p class="muted">You'll get a reference straight away. Cancel any time from My bookings.</p></div></li>
+      </ol>
+    </div>
+    <div class="app">
+      <div><p class="eyebrow" style="color:inherit;opacity:.8">CareSlot app</p><h2>Book from your phone</h2><p>Manage appointments, get reminders and rebook your regular GP in a couple of taps.</p><a class="btn" href="#book" data-go="book">Book on the web now</a></div>
+      <div class="phone" aria-hidden="true"><i style="width:60%"></i><b class="on"></b><b></b><b></b><i></i><i style="width:70%"></i><b></b></div>
+    </div>
+  </section>
+
+  <section class="reveal" style="display:grid;gap:1rem">
+    <div class="row"><h2>Meet the team</h2><a href="#team" data-go="team">All clinicians →</a></div>
+    <div class="rail">${Object.entries(PRACS).map(([id,p])=>{const n=nextFor(id)[0];return `<div class="member"><div class="prac"><span class="avatar">${p.init}</span><div><b>${p.name}</b><br><small class="muted">${p.role}</small></div></div><span class="next">${n?`Next free <b>${relDay(n.ds)} ${fmtTime(n.m)}</b>`:"No times this fortnight"}</span><button data-bp="${id}">Book</button></div>`}).join("")}</div>
+  </section>
+
+  <section class="info reveal">
+    <div class="panel">
+      <h2>Common questions</h2>
+      <div>
+        <details><summary>Do you bulk bill?</summary><p>We bulk bill standard GP consults for children under 16, concession card holders and existing telehealth patients. Other appointments are mixed billing with a Medicare rebate.</p></details>
+        <details><summary>I'm a new patient. What should I bring?</summary><p>Your Medicare card, any concession or health fund card, and a list of current medications. Arrive 5 minutes early to complete registration.</p></details>
+        <details><summary>Can I see a psychologist without a referral?</summary><p>Yes, but to claim the Medicare rebate you need a mental health care plan from a GP. Book a long GP consult first and we'll organise it.</p></details>
+        <details><summary>How do I cancel?</summary><p>Sign in to My bookings and tap Cancel, or call reception. Please give 24 hours' notice so someone else can use the time.</p></details>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="row"><h2>Opening hours</h2></div>
+      <ul class="hours">${[1,2,3,4,5,6,0].map(d=>`<li class="${d===dow?"today":""}"><span>${dn[d]}${d===dow?" (today)":""}</span><span class="mono">${PRACTICE.open[d]?`${fmtTime(PRACTICE.open[d][0]*60)} – ${fmtTime(PRACTICE.open[d][1]*60)}`:"Closed"}</span></li>`).join("")}</ul>
+      <p class="muted">Level 1, 48 Sample Street, Adelaide SA 5000. On-site parking and wheelchair access.</p>
+    </div>
+  </section>`;
+  view.querySelectorAll("[data-quick]").forEach(b=>b.onclick=()=>{const [p,ds,m]=b.dataset.quick.split("|");booking={service:"gp",prac:p,date:ds,start:+m,step:3};go("book")});
+  view.querySelectorAll("[data-bp]").forEach(b=>b.onclick=()=>bookWith(b.dataset.bp));
+  bindNeeds();
+}
+function bindNeeds(){
+  view.querySelectorAll("[data-need]").forEach(b=>b.onclick=()=>{
+    view.querySelectorAll("[data-need]").forEach(x=>x.setAttribute("aria-pressed",x===b));
+    const ids=b.dataset.need==="all"?null:b.dataset.need.split(",");
+    let n=0; view.querySelectorAll("#svcGrid .svc").forEach(c=>{if(c.dataset.id==="help"){c.classList.toggle("hide",!!ids);return}const show=!ids||ids.includes(c.dataset.id);c.classList.toggle("hide",!show);c.classList.remove("pop");if(show){void c.offsetWidth;c.classList.add("pop");n++}});
+    document.getElementById("needCount").textContent=`${n} service${n>1?"s":""}`;
+  });
+}
+function bookWith(p){booking={service:SERVICES.find(s=>s.prac.includes(p)).id,prac:p,step:2};go("book")}
+// Keep the live badge and availability fresh while the page is open
+setInterval(()=>{const s=document.getElementById("liveStatus"); if(s) s.innerHTML=statusHTML()},30000);
+
+function renderServices(){
+  view.innerHTML=`<section style="display:grid;gap:.5rem"><p class="eyebrow">What we offer</p><h1>Services</h1><p class="muted">${SERVICES.length} services, ${Object.keys(PRACS).length} clinicians, one front desk.</p></section>
+  <section class="need"><div class="row"><span></span><span class="muted" id="needCount">${SERVICES.length} services</span></div><div class="chips" role="group" aria-label="Filter services">${NEEDS.map(([k,l],i)=>`<button class="chip" aria-pressed="${i===0}" data-need="${k}">${l}</button>`).join("")}</div>${svcGrid()}</section>`;
+  bindNeeds();
+}
+
+function renderService(id){
+  const s=SERVICES.find(x=>x.id===id); if(!s) return renderServices();
+  const quick=s.prac.flatMap(p=>nextFor(p,s.mins,2)).sort((a,b)=>(a.ds+pad(a.m)).localeCompare(b.ds+pad(b.m))).slice(0,4);
+  view.innerHTML=`
+  <a href="#services" data-go="services">← All services</a>
+  <section class="banner">${photo(s.id,s.name)}<div class="over"><span class="tag">${s.tag}</span><h1>${s.name}</h1><p>${s.summary}</p></div></section>
+  <section class="svc-page">
+    <div class="body">
+      <h2>What's included</h2><ul>${s.detail.map(d=>`<li>${d}</li>`).join("")}</ul>
+      <h2>Before your visit</h2>
+      <p class="muted">Bring your Medicare card and any concession or health fund card. Arrive 5 minutes early for your first visit so we can complete your registration.</p>
+      <h2>Who you'll see</h2>
+      ${s.prac.map(p=>`<div class="prac"><span class="avatar">${PRACS[p].init}</span><div><b>${PRACS[p].name}</b><br><small class="muted">${PRACS[p].role}</small></div></div>`).join("")}
+    </div>
+    <aside class="aside">
+      <div class="kv"><span>Appointment length</span><span class="mono">${s.mins} min</span></div>
+      <div class="kv"><span>Fees</span><span style="text-align:right">${s.fee}</span></div>
+      <p class="eyebrow">Soonest times</p>
+      <div class="quick">${quick.map(q=>`<button class="slotchip" data-q="${q.p}|${q.ds}|${q.m}" title="${PRACS[q.p].name}">${relDay(q.ds)} ${fmtTime(q.m)}</button>`).join("")||'<span class="muted">No times this fortnight</span>'}</div>
+      <button class="btn-primary" id="bookSvc">Book ${s.name.toLowerCase()}</button>
+    </aside>
+  </section>
+  <section class="reveal" style="display:grid;gap:1rem"><h2>Other services</h2><div class="svc-grid">${SERVICES.filter(x=>x.id!==s.id).slice(0,3).map(svcCard).join("")}</div></section>`;
+  document.getElementById("bookSvc").onclick=()=>{booking={service:s.id,step:1};if(s.prac.length===1){booking.prac=s.prac[0];booking.step=2}go("book")};
+  view.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{const [p,ds,m]=b.dataset.q.split("|");booking={service:s.id,prac:p,date:ds,start:+m,step:3};go("book")});
+}
+
+function renderTeam(){
+  const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  view.innerHTML=`<section style="display:grid;gap:.5rem"><p class="eyebrow">Our team</p><h1>Clinicians</h1></section>
+  <section class="svc-grid">${Object.entries(PRACS).map(([id,p])=>{const n=nextFor(id)[0];const svcs=SERVICES.filter(s=>s.prac.includes(id));return `<div class="member"><div class="prac"><span class="avatar">${p.init}</span><div><h3>${p.name}</h3><small class="muted">${p.role}</small></div></div><div class="chips">${svcs.map(s=>`<span class="pill st-booked">${s.name}</span>`).join("")}</div><span class="next">Works ${p.days.map(d=>dn[d]).join(", ")}</span><span class="next">${n?`Next free <b>${relDay(n.ds)} ${fmtTime(n.m)}</b>`:"No times this fortnight"}</span><button data-bp="${id}">Book with ${p.name.startsWith("Dr ")?"Dr "+p.name.split(" ").pop():p.name.split(" ")[0]}</button></div>`}).join("")}</section>`;
+  view.querySelectorAll("[data-bp]").forEach(b=>b.onclick=()=>bookWith(b.dataset.bp));
+}
+
+/* ---------- Booking flow ---------- */
+function renderBook(){
+  booking.step=booking.step||0;
+  const labels=["Service","Practitioner","Date & time","Your details"];
+  const st=booking.step;
+  let body="";
+  const svc=SERVICES.find(s=>s.id===booking.service);
+  if(st===0){
+    body=`<h2>What do you need?</h2><div class="choices">${SERVICES.map(s=>`<button class="choice img" aria-pressed="${booking.service===s.id}" data-svc="${s.id}">${photo(s.id,"")}<span>${s.name}<br><small>${s.mins} min · ${s.tag}</small></span></button>`).join("")}</div>`;
+  } else if(st===1){
+    body=`<h2>Who would you like to see?</h2><div class="choices">${svc.prac.map(p=>{const n=nextFor(p,svc.mins)[0];return `<button class="choice" aria-pressed="${booking.prac===p}" data-prac="${p}"><span class="prac"><span class="avatar">${PRACS[p].init}</span><span>${PRACS[p].name}<br><small>${PRACS[p].role}</small><br><small>${n?`Next free ${relDay(n.ds)} ${fmtTime(n.m)}`:"No times this fortnight"}</small></span></span></button>`}).join("")}</div>`;
+  } else if(st===2){
+    const t=new Date(); const days=[...Array(14)].map((_,i)=>addDays(t,i));
+    if(!booking.date){const f=days.find(d=>slotsFor(booking.prac,ymd(d),svc.mins).length);booking.date=f?ymd(f):ymd(t)}
+    const slots=slotsFor(booking.prac,booking.date,svc.mins);
+    body=`<h2>Pick a time with ${PRACS[booking.prac].name}</h2>
+    <div class="days" role="group" aria-label="Date">${days.map(d=>{const ds=ymd(d);const n=slotsFor(booking.prac,ds,svc.mins).length;return `<button class="day" aria-pressed="${booking.date===ds}" data-day="${ds}" ${n?"":"disabled"}><small>${d.toLocaleDateString("en-AU",{weekday:"short"})}</small><b>${d.getDate()}</b><small>${n?n+" free":"—"}</small></button>`}).join("")}</div>
+    <div class="times" role="group" aria-label="Time">${slots.map((m,i)=>`<button class="time" style="animation-delay:${Math.min(i*18,400)}ms" aria-pressed="${booking.start===m}" data-time="${m}">${fmtTime(m)}</button>`).join("")||'<p class="muted">No times on this day.</p>'}</div>`;
+  } else if(st===3){
+    const u=session&&DEMO_USERS[session.email];
+    body=`<h2>Your details</h2>
+    <div class="summary"><b>${svc.name} with ${PRACS[booking.prac].name}</b><span>${relDay(booking.date)} at <span class="mono">${fmtTime(booking.start)}</span> · ${svc.mins} min</span></div>
+    <form class="form" id="detailsForm" novalidate>
+      <label>Full name<input id="f-name" required value="${esc(u?.name||"")}"></label>
+      <label>Mobile<input id="f-phone" required inputmode="tel" value="${esc(u?.phone||"")}"></label>
+      <label class="full">Email<input id="f-email" type="email" required value="${esc(session?.email||"")}"></label>
+      <label class="full">Reason for visit (optional)<textarea id="f-notes" rows="2"></textarea></label>
+      <label class="full" style="display:flex;gap:.5rem;align-items:center;font-weight:400"><input id="f-new" type="checkbox" style="width:auto"> I'm a new patient at this clinic</label>
+      <p class="err full" id="f-err" hidden></p>
+      <div class="full"><button class="btn-primary" type="submit">Confirm booking</button></div>
+    </form>`;
+  } else if(st===4){
+    const a=appts.find(x=>x.id===booking.done);
+    body=`<div class="check" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 30 30"><path d="M7 15.5l5.5 5.5L23.5 9" stroke="var(--accent-ink)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h2>You're booked.</h2><div class="summary"><b>${SERVICES.find(s=>s.id===a.service).name} with ${PRACS[a.prac].name}</b><span>${relDay(a.date)} at <span class="mono">${fmtTime(a.start)}</span></span><span class="muted">Reference <span class="mono">${a.id}</span>. A confirmation would be sent to ${esc(a.email)}.</span></div>
+    <div class="row"><button id="again">Make another booking</button><a class="btn btn-primary" href="#account" data-go="account">View my bookings</a></div>`;
+  }
+  view.innerHTML=`<section><p class="eyebrow">Online booking</p><h1>Book an appointment</h1>
+   ${st<4?`<div class="progress" aria-hidden="true"><span style="width:${(st/4)*100+8}%"></span></div><div class="steps">${labels.map((l,i)=>`<span class="${i===st?"on":i<st?"done":""}">${i+1}. ${l}</span>`).join("")}</div>`:""}</section>
+   <section class="panel">${body}
+   ${st>0&&st<4?`<div class="row"><button id="back">← Back</button>${st<3?`<button class="btn-primary" id="next" ${(st===1&&!booking.prac)||(st===2&&booking.start==null)?"disabled":""}>Continue</button>`:""}</div>`:""}
+   </section>`;
+  view.querySelectorAll("[data-svc]").forEach(b=>b.onclick=()=>{booking={service:b.dataset.svc,step:1};const s=SERVICES.find(x=>x.id===booking.service);if(s.prac.length===1){booking.prac=s.prac[0];booking.step=2}renderBook();enhance("book")});
+  view.querySelectorAll("[data-prac]").forEach(b=>b.onclick=()=>{booking.prac=b.dataset.prac;booking.date=null;booking.start=null;booking.step=2;renderBook()});
+  view.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{booking.date=b.dataset.day;booking.start=null;renderBook()});
+  view.querySelectorAll("[data-time]").forEach(b=>b.onclick=()=>{booking.start=+b.dataset.time;booking.step=3;renderBook()});
+  const back=document.getElementById("back"); if(back) back.onclick=()=>{booking.step--;if(booking.step===1&&svc.prac.length===1)booking.step=0;renderBook();enhance("book")};
+  const next=document.getElementById("next"); if(next) next.onclick=()=>{booking.step++;renderBook()};
+  const again=document.getElementById("again"); if(again) again.onclick=()=>{booking={};renderBook();enhance("book")};
+  const form=document.getElementById("detailsForm");
+  if(form) form.addEventListener("submit",e=>{
+    e.preventDefault();
+    const v=id=>document.getElementById(id).value.trim(); const err=document.getElementById("f-err");
+    if(!v("f-name")||!v("f-phone")||!/^\S+@\S+\.\S+$/.test(v("f-email"))){err.textContent="Enter your name, mobile and a valid email to confirm.";err.hidden=false;return}
+    if(!slotsFor(booking.prac,booking.date,svc.mins).includes(booking.start)){err.textContent="That time was just taken. Go back and pick another.";err.hidden=false;return}
+    const a={id:"A"+(1000+appts.length),service:booking.service,prac:booking.prac,date:booking.date,start:booking.start,name:v("f-name"),email:v("f-email").toLowerCase(),phone:v("f-phone"),notes:v("f-notes"),newPatient:document.getElementById("f-new").checked,status:"booked",created:Date.now()};
+    appts.push(a);save();lastBooked=a.id;booking={step:4,done:a.id};renderBook();toast("Booking confirmed");
+  });
+}
+
+/* ---------- Auth ---------- */
+function loginForm(role){
+  const demo=role==="admin"?"admin@demo.com / admin1234":"patient@demo.com / demo1234";
+  return `<form class="auth panel" id="loginForm" novalidate>
+    <h2>${role==="admin"?"Staff sign in":"Patient sign in"}</h2>
+    <label>Email<input id="l-email" type="email" autocomplete="username"></label>
+    <label>Password<input id="l-pw" type="password" autocomplete="current-password"></label>
+    <p class="err" id="l-err" hidden></p>
+    <button class="btn-primary" type="submit">Sign in</button>
+    <p class="hint">Demo login: <span class="mono">${demo}</span></p>
+  </form>`;
+}
+function bindLogin(role,after){
+  document.getElementById("loginForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const em=document.getElementById("l-email").value.trim().toLowerCase(), pw=document.getElementById("l-pw").value;
+    const u=DEMO_USERS[em]; const err=document.getElementById("l-err");
+    if(!u||u.pw!==pw){err.textContent="Email or password is incorrect.";err.hidden=false;return}
+    if(u.role!==role){err.textContent=role==="admin"?"This account doesn't have staff access.":"Staff accounts sign in on the Staff page.";err.hidden=false;return}
+    session={email:em,role:u.role};store.set("kh_session",session);toast("Signed in");after();
+  });
+}
+const signOut=()=>{session=null;store.set("kh_session",null);toast("Signed out");render(location.hash.slice(1))};
+const pill=s=>`<span class="pill st-${s}">${s[0].toUpperCase()+s.slice(1)}</span>`;
+
+function renderAccount(){
+  if(!session||session.role!=="patient"){view.innerHTML=`<section><p class="eyebrow">My bookings</p><h1>Manage your appointments</h1></section>${loginForm("patient")}`;return bindLogin("patient",renderAccount)}
+  const u=DEMO_USERS[session.email]; const today=ymd(new Date());
+  const mine=appts.filter(a=>a.email===session.email).sort((a,b)=>(a.date+pad(a.start)).localeCompare(b.date+pad(b.start)));
+  const up=mine.filter(a=>a.date>=today&&a.status!=="cancelled"), past=mine.filter(a=>a.date<today||a.status==="cancelled");
+  const item=(a,canCancel)=>{const d=new Date(a.date+"T00:00");return `<div class="appt"><div class="date-tile"><small>${d.toLocaleDateString("en-AU",{month:"short"})}</small><b>${d.getDate()}</b></div>
+    <div><b>${SERVICES.find(s=>s.id===a.service).name}</b><br><span class="muted">${PRACS[a.prac].name} · <span class="mono">${fmtTime(a.start)}</span></span></div>
+    <div class="row">${pill(a.status)}${canCancel?`<button data-cancel="${a.id}">Cancel</button>`:""}</div></div>`};
+  view.innerHTML=`<section class="row"><div><p class="eyebrow">Signed in as ${esc(u.name)}</p><h1>My bookings</h1></div><div class="row"><a class="btn btn-primary" href="#book" data-go="book">New booking</a><button id="so">Sign out</button></div></section>
+  <section class="panel"><h2>Upcoming</h2>${up.map(a=>item(a,true)).join("")||'<p class="muted">No upcoming appointments.</p>'}</section>
+  ${past.length?`<section class="panel"><h2>Past and cancelled</h2>${past.map(a=>item(a,false)).join("")}</section>`:""}`;
+  document.getElementById("so").onclick=signOut;
+  view.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>{
+    if(b.dataset.armed){appts.find(a=>a.id===b.dataset.cancel).status="cancelled";save();toast("Appointment cancelled");renderAccount()}
+    else{b.dataset.armed=1;b.textContent="Tap again to cancel";b.style.borderColor="var(--bad)";b.style.color="var(--bad)"}
+  });
+}
+
+/* ---------- Admin ---------- */
+let adminState={date:ymd(new Date()),prac:"all",tab:"schedule"};
+function renderAdmin(){
+  if(!session||session.role!=="admin"){view.innerHTML=`<section><p class="eyebrow">Staff</p><h1>Practice dashboard</h1></section>${loginForm("admin")}`;return bindLogin("admin",renderAdmin)}
+  const day=appts.filter(a=>a.date===adminState.date&&(adminState.prac==="all"||a.prac===adminState.prac)).sort((a,b)=>a.start-b.start);
+  const live=day.filter(a=>a.status!=="cancelled");
+  const capacity=Object.keys(PRACS).filter(p=>adminState.prac==="all"||p===adminState.prac).reduce((n,p)=>n+slotsFor(p,adminState.date,15).length,0);
+  const tabs=`<div class="tabs" role="tablist">${[["schedule","Schedule"],["patients","Patients"],["services","Services & staff"]].map(([k,l])=>`<button role="tab" aria-selected="${adminState.tab===k}" data-tab="${k}">${l}</button>`).join("")}</div>`;
+  let content="";
+  if(adminState.tab==="schedule"){
+    content=`<div class="stats">
+      <div class="stat"><span class="eyebrow">Booked</span><b data-count="${live.length}">0</b></div>
+      <div class="stat"><span class="eyebrow">Arrived</span><b data-count="${day.filter(a=>a.status==="arrived").length}">0</b></div>
+      <div class="stat"><span class="eyebrow">Cancelled</span><b data-count="${day.filter(a=>a.status==="cancelled").length}">0</b></div>
+      <div class="stat"><span class="eyebrow">Free 15-min slots</span><b data-count="${capacity}">0</b></div></div>
+    <div class="toolbar">
+      <label>Date<input type="date" id="a-date" value="${adminState.date}"></label>
+      <label>Practitioner<select id="a-prac"><option value="all">All practitioners</option>${Object.entries(PRACS).map(([k,p])=>`<option value="${k}" ${adminState.prac===k?"selected":""}>${p.name}</option>`).join("")}</select></label>
+      <button id="a-today">Today</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Time</th><th>Patient</th><th>Service</th><th>Practitioner</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+    ${day.map(a=>`<tr class="${a.id===lastBooked?"fresh":""}"><td class="mono">${fmtTime(a.start)}</td><td><b>${esc(a.name)}</b>${a.newPatient?' <span class="pill st-arrived">New</span>':""}<br><small class="muted">${esc(a.phone)}${a.notes?" · "+esc(a.notes):""}</small></td><td>${SERVICES.find(s=>s.id===a.service).name}</td><td>${PRACS[a.prac].name}</td><td>${pill(a.status)}</td>
+      <td><div class="acts">${a.status==="booked"?`<button data-st="arrived|${a.id}">Arrived</button>`:""}${a.status==="arrived"?`<button data-st="completed|${a.id}">Complete</button>`:""}${a.status!=="cancelled"&&a.status!=="completed"?`<button data-st="cancelled|${a.id}">Cancel</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="6" class="muted">No appointments on ${fmtDate(adminState.date)}.</td></tr>`}
+    </tbody></table></div>`;
+  } else if(adminState.tab==="patients"){
+    const byEmail={}; appts.forEach(a=>{(byEmail[a.email]=byEmail[a.email]||{name:a.name,phone:a.phone,email:a.email,n:0,next:null}).n++; if(a.date>=ymd(new Date())&&a.status==="booked"&&(!byEmail[a.email].next||a.date<byEmail[a.email].next))byEmail[a.email].next=a.date});
+    content=`<div class="table-wrap"><table><thead><tr><th>Patient</th><th>Mobile</th><th>Email</th><th>Visits</th><th>Next booking</th></tr></thead><tbody>
+    ${Object.values(byEmail).map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="mono">${esc(p.phone)}</td><td>${esc(p.email)}</td><td class="mono">${p.n}</td><td>${p.next?fmtDate(p.next):"—"}</td></tr>`).join("")}</tbody></table></div>`;
+  } else {
+    const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    content=`<div class="table-wrap"><table><thead><tr><th>Service</th><th>Length</th><th>Practitioners</th><th>Public page</th></tr></thead><tbody>
+    ${SERVICES.map(s=>`<tr><td><b>${s.name}</b></td><td class="mono">${s.mins} min</td><td>${s.prac.map(p=>PRACS[p].name).join(", ")}</td><td><a href="#svc-${s.id}" data-go="svc-${s.id}">View</a></td></tr>`).join("")}</tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Practitioner</th><th>Role</th><th>Working days</th></tr></thead><tbody>
+    ${Object.values(PRACS).map(p=>`<tr><td><b>${p.name}</b></td><td>${p.role}</td><td>${p.days.map(d=>dn[d]).join(", ")}</td></tr>`).join("")}</tbody></table></div>
+    <p class="muted">In the full version, staff edit services, hours and leave here, and changes publish to the website and app straight away.</p>`;
+  }
+  view.innerHTML=`<section class="row"><div><p class="eyebrow">Kestrel Health · Staff</p><h1>Practice dashboard</h1></div><div class="row"><button id="reset">Reset demo data</button><button id="so">Sign out</button></div></section>
+  <section style="display:grid;gap:1rem">${tabs}${content}</section>`;
+  document.getElementById("so").onclick=signOut;
+  document.getElementById("reset").onclick=()=>{appts=seed();save();toast("Demo data reset");renderAdmin()};
+  view.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{adminState.tab=b.dataset.tab;renderAdmin()});
+  const ad=document.getElementById("a-date"); if(ad) ad.onchange=()=>{adminState.date=ad.value||ymd(new Date());renderAdmin()};
+  const ap=document.getElementById("a-prac"); if(ap) ap.onchange=()=>{adminState.prac=ap.value;renderAdmin()};
+  const at=document.getElementById("a-today"); if(at) at.onclick=()=>{adminState.date=ymd(new Date());renderAdmin()};
+  view.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const [s,id]=b.dataset.st.split("|");appts.find(a=>a.id===id).status=s;save();toast(`Marked ${s}`);renderAdmin()});
+  countUp();
+}
+function countUp(){
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  view.querySelectorAll("[data-count]").forEach(el=>{const to=+el.dataset.count; if(reduce||!to){el.textContent=to;return}
+    const t0=performance.now(); const step=t=>{const p=Math.min(1,(t-t0)/600); el.textContent=Math.round(to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(step)}; requestAnimationFrame(step); setTimeout(()=>el.textContent=to,900);});
+}
+
+render(location.hash.slice(1));
+</script>
+</body>
+</html>
