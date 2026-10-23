@@ -259,7 +259,7 @@ footer .wrap > *{min-width:0}
 </head>
 <body>
 
-<div class="demo-banner"><div class="wrap">Demo site with sample data and AI-generated photos. Bookings are saved in this browser only.</div></div>
+<div class="demo-banner"><div class="wrap">Demo site with sample data and AI-generated photos (v2). Bookings are saved in this browser only.</div></div>
 <header id="hdr">
   <div class="wrap nav">
     <a class="brand" href="#home" data-go="home">
@@ -330,7 +330,7 @@ const fmtTime=m=>{const h=Math.floor(m/60),mm=m%60;return `${((h+11)%12)+1}:${pa
 const fmtDate=s=>new Date(s+"T00:00").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"});
 const relDay=s=>{const t=ymd(new Date());return s===t?"Today":s===ymd(addDays(new Date(),1))?"Tomorrow":fmtDate(s)};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const photo=(k,alt,cls="")=>`<div class="photo ${cls}"><img src="${IMG[k]}" alt="${esc(alt)}" loading="lazy"></div>`;
+const photo=(k,alt,cls="")=>`<div class="photo ${cls}"><img src="${IMG[k]}" alt="${esc(alt)}" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=this.getAttribute('src').replace('img/','')}"></div>`;
 
 function seed(){
   const t=new Date(); const out=[]; let id=1;
